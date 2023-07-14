@@ -26,6 +26,7 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'auth'], function () {
 
 Route::group(['middleware' => 'auth:sanctum'], function(){
     Route::get('/users', [UserController::class, 'getUsers']);
+    Route::put('/user/status/{id}', [UserController::class, 'editUserStatus']);
 });
 
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('web');
