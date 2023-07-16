@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class LogBlastEmail extends Model
 {
     use HasFactory;
-    protected $table = 'log_blast_table';
+    protected $table = 'log_blast_email';
     protected $fillable = [
         'uuid',
         'email',

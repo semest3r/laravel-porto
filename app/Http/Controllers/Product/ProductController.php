@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Ramsey\Uuid\Uuid;
 
 class ProductController extends Controller
@@ -105,8 +106,8 @@ class ProductController extends Controller
         if (!$product) return response()->json(['message' => 'Data Not Found'], 404);
 
         $validator = Validator::make($request->all(), [
-            'name_product' => ['required'],
-            'code_product' => ['required'],
+            'name_product' => ['required', Rule::unique('products')->ignore($product->id)],
+            'code_product' => ['required', Rule::unique('products')->ignore($product->id)],
             'category' => ['required'],
         ]);
         if ($validator->fails()) return response()->json($validator->errors(), 422);
