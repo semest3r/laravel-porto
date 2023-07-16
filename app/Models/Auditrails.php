@@ -10,8 +10,8 @@ class Auditrails extends Model
     use HasFactory;
 
     protected $fillable = [
+        'name_user',
         'user_id',
-        'role_id',
         'activity'
     ];
 }

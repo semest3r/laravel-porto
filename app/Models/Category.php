@@ -12,6 +12,7 @@ class Category extends Model
     protected $fillable = [
         'uuid',
         'name_category',
-        'code_category'
+        'code_category',
+        'group_category_id'
     ];
 }

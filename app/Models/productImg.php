@@ -10,9 +10,10 @@ class productImg extends Model
     use HasFactory;
     protected $table = 'product_img';
     protected $fillable = [
+        'uuid',
         'filename',
         'path',
-        'type_file',
+        'file_type',
         'product_id'
     ];
 }

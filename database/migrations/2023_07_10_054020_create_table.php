@@ -47,9 +47,18 @@ return new class extends Migration
             $table->string('code_product', 6)->unique();
             $table->foreignId('created_by')->references('id')->on('users');
             $table->foreignId('category_id')->references('id')->on('categories');
+            $table->softDeletes();
             $table->timestamps();
         });
-
+        Schema::create('product_img', function(Blueprint $table){
+            $table->id();
+            $table->uuid();
+            $table->foreignId('product_id')->references('id')->on('products');
+            $table->string('filename')->unique();
+            $table->string('path')->unique();
+            $table->enum('file_type', ['jpeg', 'jpg', 'png', 'svg']);
+            $table->timestamps();
+        });
         Schema::create('subscribers', function (Blueprint $table) {
             $table->id();
             $table->uuid();
@@ -66,9 +75,10 @@ return new class extends Migration
         });
         Schema::create('auditrails', function (Blueprint $table) {
             $table->id();
-            $table->uuid();
-            $table->foreignId('user_id')->references('id')->on('users');
-            $table->foreignId('role_id')->references('id')->on('roles');
+            $table->string('name_user');
+            $table->string('user_id');
+            //$table->foreignId('user_id')->references('id')->on('users');
+            //$table->foreignId('role_id')->references('id')->on('roles');
             $table->text('activity');
             $table->timestamps();
         });
@@ -82,6 +92,7 @@ return new class extends Migration
         Schema::dropIfExists('auditrails');
         Schema::dropIfExists('log_blast_email');
         Schema::dropIfExists('subscribers');
+        Schema::dropIfExists('product_img');
         Schema::dropIfExists('products');
         Schema::dropIfExists('categories');
         Schema::dropIfExists('group_categories');

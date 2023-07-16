@@ -20,13 +20,8 @@ class UserController extends Controller
     public function editUserStatus(Request $request, $id)
     {
         $user = User::where('uuid', $id)->firstOrFail();
-        if ($user->is_active) {
-            $user->is_active = false;
-            $user->save();
-        } else {
-            $user->is_active = true;
-            $user->save();
-        }
+        $user->is_active = $user->is_active ? false : true;
+        $user->save();
         return response()->json(['message' => 'Success Update'], 200);
     }
 }
