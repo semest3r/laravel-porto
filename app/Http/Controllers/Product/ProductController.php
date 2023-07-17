@@ -22,9 +22,12 @@ class ProductController extends Controller
         return response()->json($product, 200);
     }
 
-    public function getProducts()
+    public function getProducts(Request $request)
     {
-        $products = Product::all();
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 10;
+        $products = Product::query()->with('category')->when($request->input('search'), function ($query, $search) {
+            $query->where('name_product', 'LIKE', '%' . $search . '%');
+        })->paginate($limit);
         return response()->json($products, 200);
     }
 
@@ -52,14 +55,13 @@ class ProductController extends Controller
                 'user_id' => $user->id,
                 'activity' => 'Create Product'
             ]);
-
             $inputProduct = [
                 'uuid' => Uuid::uuid4(),
                 'user_id' => $user->id,
                 'name_product' => $request->input('name_product'),
                 'code_product' => $request->input('code_product'),
                 'created_by' => $user->id,
-                'category_id' => $request->input('category')
+                'category_id' => $request->input('category')['id']
             ];
             $createdProduct = Product::create($inputProduct);
 

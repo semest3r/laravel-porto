@@ -25,7 +25,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+    $user = $request->user();
+    return [
+        'uuid' => $user->uuid,
+        'email' => $user->email,
+        'name' => $user->name,
+    ];
 });
 
 Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'auth'], function () {
@@ -35,29 +40,31 @@ Route::group(['middleware' => 'auth:sanctum', 'prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'users'], function () {
         Route::get('', [UserController::class, 'getUsers']);
+        Route::get('/csv', [UserController::class, 'csv']);
+        Route::get('/pdf', [UserController::class, 'pdf']);
         Route::put('/status/{id}', [UserController::class, 'editUserStatus']);
     });
-    Route::group(['prefix'=>'roles'], function(){
+    Route::group(['prefix' => 'roles'], function () {
         Route::get('', [RoleController::class, 'getRoles']);
         Route::get('/{id}', [RoleController::class, 'getRole']);
         Route::post('/create', [RoleController::class, 'create']);
         Route::put('/edit/{id}', [RoleController::class, 'update']);
         Route::delete('/delete/{id}', [RoleController::class, 'delete']);
     });
-    Route::group(['prefix' => 'user-role'], function(){
+    Route::group(['prefix' => 'user-role'], function () {
         Route::get('/{id}', [UserRoleController::class, 'getUserRole']);
         Route::post('/create', [UserRoleController::class, 'create']);
         Route::put('/edit/{id}', [UserRoleController::class, 'update']);
         Route::delete('/delete/{id}', [UserRoleController::class, 'delete']);
     });
-    Route::group(['prefix' => 'categories'], function(){
+    Route::group(['prefix' => 'categories'], function () {
         Route::get('', [CategoryController::class, 'getCategories']);
         Route::get('/{id}', [CategoryController::class, 'getCategory']);
         Route::post('/create', [CategoryController::class, 'create']);
         Route::put('/edit/{id}', [CategoryController::class, 'update']);
         Route::delete('/delete/{id}', [CategoryController::class, 'delete']);
     });
-    Route::group(['prefix' => 'group-categories'], function(){
+    Route::group(['prefix' => 'group-categories'], function () {
         Route::get('', [GroupCategoryController::class, 'getGroupCategories']);
         Route::get('/{id}', [GroupCategoryController::class, 'getGroupCategory']);
         Route::post('/create', [GroupCategoryController::class, 'create']);
@@ -85,6 +92,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::get('/log-blast-email', [LogBlastEmailController::class, 'getLogBlastEmail']);
     Route::get('/auditrails', [AuditrailController::class, 'getAuditrails']);
+    Route::get('/auditrails/export', [AuditrailController::class, 'csv']);
+    Route::get('/auditrails/pdf', [AuditrailController::class, 'pdf']);
 });
-
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('web');
