@@ -12,9 +12,12 @@ use Ramsey\Uuid\Uuid;
 
 class GroupCategoryController extends Controller
 {
-    public function getGroupCategories()
+    public function getGroupCategories(Request $request)
     {
-        $groupCategories = GroupCategory::all();
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 10;
+        $groupCategories = GroupCategory::query()->when($request->input('search'), function ($query, $search) {
+            $query->where('name_group_category', 'LIKE', '%' . $search . '%');
+        })->paginate($limit);
         return response()->json($groupCategories, 200);
     }
 
@@ -54,9 +57,8 @@ class GroupCategoryController extends Controller
         if ($validator->fails()) return response()->json($validator->errors(), 422);
 
         $input = [
-            'name_category' => $request->input('name_category'),
-            'code_category' => $request->input('code_category'),
-            'group_category_id' => $request->input('group_category'),
+            'name_group_category' => $request->input('name_group_category'),
+            'code_group_category' => $request->input('code_group_category'),
         ];
         $groupCategory->fill($input);
         $groupCategory->save();
@@ -67,13 +69,13 @@ class GroupCategoryController extends Controller
     {
         $groupCategory = GroupCategory::find($id);
         if (!$groupCategory) return response()->json(['message' => 'Data Not Found'], 404);
-        try{
+        try {
             DB::beginTransaction();
             $groupCategory->delete();
             DB::commit();
-        }catch(\Exception $Err){
+        } catch (\Exception $Err) {
             DB::rollBack();
-            if($Err->getCode() == 23000) return response()->json(['message' => 'Integrity constraint violation: 1451 Cannot delete or update a parent row']);
+            if ($Err->getCode() == 23000) return response()->json(['message' => 'Integrity constraint violation: 1451 Cannot delete or update a parent row'], 400);
             return response()->json(['message' => 'Please Contact Administration'], 500);
         }
         return response()->json(['message' => 'Delete Category Success'], 200);

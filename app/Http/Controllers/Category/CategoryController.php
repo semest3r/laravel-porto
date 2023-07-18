@@ -12,9 +12,12 @@ use Ramsey\Uuid\Uuid;
 
 class CategoryController extends Controller
 {
-    public function getCategories()
+    public function getCategories(Request $request)
     {
-        $categories = Category::all();
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 10;
+        $categories = Category::query()->with('groupCategory')->when($request->input('search'), function ($query, $search) {
+            $query->where('name_category', 'LIKE', '%' . $search . '%');
+        })->paginate($limit);
         return response()->json($categories, 200);
     }
 
@@ -38,7 +41,7 @@ class CategoryController extends Controller
             'uuid' => Uuid::uuid4(),
             'name_category' => $request->input('name_category'),
             'code_category' => $request->input('code_category'),
-            'group_category_id' => $request->input('group_category'),
+            'group_category_id' => $request->input('group_category')['id'],
         ];
         Category::create($input);
         return response()->json(['message' => 'Create Category Success'], 201);
@@ -59,7 +62,7 @@ class CategoryController extends Controller
         $input = [
             'name_category' => $request->input('name_category'),
             'code_category' => $request->input('code_category'),
-            'group_category_id' => $request->input('group_category'),
+            'group_category_id' => $request->input('group_category')['id'],
         ];
         $category->fill($input);
         $category->save();
@@ -71,13 +74,13 @@ class CategoryController extends Controller
         $category = Category::find($id);
         if (!$category) return response()->json(['message' => 'Data Not Found'], 404);
 
-        try{
+        try {
             DB::beginTransaction();
             $category->delete();
             DB::commit();
-        }catch(\Exception $Err){
+        } catch (\Exception $Err) {
             DB::rollBack();
-            if($Err->getCode() == 23000) return response()->json(['message' => 'Integrity constraint violation: 1451 Cannot delete or update a parent row']);
+            if ($Err->getCode() == 23000) return response()->json(['message' => 'Integrity constraint violation: 1451 Cannot delete or update a parent row'], 400);
             return response()->json(['message' => 'Please Contact Administration'], 500);
         }
 

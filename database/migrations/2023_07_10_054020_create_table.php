@@ -56,6 +56,7 @@ return new class extends Migration
             $table->foreignId('product_id')->references('id')->on('products');
             $table->string('filename')->unique();
             $table->string('path')->unique();
+            $table->string('img_url')->unique();
             $table->enum('file_type', ['jpeg', 'jpg', 'png', 'svg']);
             $table->timestamps();
         });

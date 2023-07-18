@@ -14,6 +14,7 @@ class productImg extends Model
         'filename',
         'path',
         'file_type',
+        'img_url',
         'product_id'
     ];
 }

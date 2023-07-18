@@ -17,7 +17,7 @@ class ProductController extends Controller
 {
     public function getProduct($id)
     {
-        $product = Product::find($id);
+        $product = Product::with(['category', 'productImg'])->find($id);
         if (!$product) return response()->json([], 404);
         return response()->json($product, 200);
     }
@@ -77,6 +77,7 @@ class ProductController extends Controller
                         'product_id' => $createdProduct->id,
                         'filename' => $filename . '.' . $ext,
                         'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
+                        'img_url' => url('api/img/' . $filename),
                         'file_type' => $ext,
                         'created_at' => now()->toDateTimeString(),
                         'updated_at' => now()->toDateTimeString()
@@ -197,6 +198,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'filename' => $filename . '.' . $ext,
                 'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
+                'img_url' => url('api/img/' . $filename),
                 'file_type' => $ext,
             ];
             $create = ProductImg::create($input);
@@ -232,6 +234,7 @@ class ProductController extends Controller
         $input = [
             'filename' => $filename . '.' . $ext,
             'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
+            'img_url' => url('api/img/' . $filename),
             'file_type' => $ext,
         ];
         try {
