@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Subscriber;
 
+use App\Exports\SubscribersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 use Ramsey\Uuid\Uuid;
 
 class SubscriberController extends Controller
@@ -15,7 +18,7 @@ class SubscriberController extends Controller
     {
         $request->input('limit') ? $limit = $request->input('limit') : $limit = 15;
         $subscribers = Subscriber::query()->when($request->input('search'), function ($query, $search) {
-            $query->where('name', 'LIKE', '%' . $search . '%');
+            $query->where('email', 'LIKE', '%' . $search . '%');
         })->paginate($limit);
         return response()->json($subscribers, 200);
     }
@@ -69,10 +72,21 @@ class SubscriberController extends Controller
 
     public function editSubscriberStatus(Request $request, $id)
     {
-        $subscriber = Subscriber::find($id);
+        $subscriber = Subscriber::where('uuid', $id)->first();
         if (!$subscriber) return response()->json(['message' => ['Data Not Found']], 404);
         $subscriber->is_active = $subscriber->is_active ? false : true;
         $subscriber->save();
         return response()->json(['message' => 'Update Status Success'], 200);
+    }
+
+    public function csv(){
+        return Excel::download(new SubscribersExport, 'subscribers.xlsx', \Maatwebsite\Excel\Excel::XLSX);
+    }
+
+    public function pdf()
+    {
+        $data = Subscriber::all();
+        $pdf = Pdf::loadView('subscribersPdf', ['subscribers' => $data]);
+        return $pdf->download();
     }
 }

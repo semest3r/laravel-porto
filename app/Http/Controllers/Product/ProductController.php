@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\productImg;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -24,10 +25,10 @@ class ProductController extends Controller
 
     public function getProducts(Request $request)
     {
-        $request->input('limit') ? $limit = $request->input('limit') : $limit = 10;
-        $products = Product::query()->with('category')->when($request->input('search'), function ($query, $search) {
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 8;
+        $products = Product::query()->with(['category', 'productImg'])->when($request->input('search'), function ($query, $search) {
             $query->where('name_product', 'LIKE', '%' . $search . '%');
-        })->paginate($limit);
+        })->simplePaginate($limit);
         return response()->json($products, 200);
     }
 
@@ -39,13 +40,11 @@ class ProductController extends Controller
             'category' => ['required'],
             'img_uploads' => ['required', 'max:2048'],
         ]);
-        if ($validator->fails()) return response()->json($validator->errors(), 422);
+        if ($validator->fails()) return response()->json($validator->errors()->toArray(), 422);
         if (count($request->file('img_uploads')) != 3) {
             return response()->json([
-                'errors' => [
-                    'img_uploads' => "Uploaded image must be equal to 3"
-                ]
-            ]);
+                'img_uploads' => ["Uploaded image must be equal to 3"]
+            ], 400);
         }
         try {
             DB::beginTransaction();
@@ -65,7 +64,7 @@ class ProductController extends Controller
             ];
             $createdProduct = Product::create($inputProduct);
 
-            $allowedfileExtension = ['pdf', 'jpeg', 'jpg', 'png'];
+            $allowedfileExtension = ['jpeg', 'jpg', 'png'];
             $inputProductImg = [];
             foreach ($request->file('img_uploads') as $file) {
                 $ext = strtolower($file->getClientOriginalExtension());
@@ -77,7 +76,7 @@ class ProductController extends Controller
                         'product_id' => $createdProduct->id,
                         'filename' => $filename . '.' . $ext,
                         'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-                        'img_url' => url('api/img/' . $filename),
+                        'img_url' => url('api/img/' . $filename .'.'. $ext),
                         'file_type' => $ext,
                         'created_at' => now()->toDateTimeString(),
                         'updated_at' => now()->toDateTimeString()
@@ -85,7 +84,7 @@ class ProductController extends Controller
                 } else {
                     return response()->json([
                         'errors' => [
-                            'img_uploads' => 'File Only PDF/JPG/JPEG/PNG Allowed'
+                            'img_uploads' => 'File Only JPG/JPEG/PNG Allowed'
                         ]
                     ], 422);
                 }
@@ -118,7 +117,7 @@ class ProductController extends Controller
         $input = [
             'name_product' => $request->input('name_product'),
             'code_product' => $request->input('code_product'),
-            'category_id' => $request->input('category'),
+            'category_id' => $request->input('category')['id'],
         ];
 
         $user = $request->user();
@@ -172,7 +171,7 @@ class ProductController extends Controller
         $product = Product::find($id);
         if (!$product) return response()->json(['message' => 'Data Not Found'], 404);
 
-        if (count($product->productImg) >= 3) return response()->json(['message' => "Uploaded image can't more than 3"], 400);
+        if (count($product->productImg) >= 3) return response()->json(['img_upload' => "Uploaded image can't more than 3"], 400);
 
         $validator = Validator::make($request->all(), [
             'img_upload' => ['required', 'max:2048']
@@ -198,7 +197,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'filename' => $filename . '.' . $ext,
                 'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-                'img_url' => url('api/img/' . $filename),
+                'img_url' => url('api/img/' . $filename .'.'. $ext),
                 'file_type' => $ext,
             ];
             $create = ProductImg::create($input);
@@ -224,17 +223,17 @@ class ProductController extends Controller
         $old_file = $productImg->path;
         $old_file_exist = Storage::exists($old_file);
         $filename = Uuid::uuid4();
-        $allowedfileExtension = ['pdf', 'jpeg', 'jpg', 'png'];
+        $allowedfileExtension = ['jpeg', 'jpg', 'png'];
         $imgUpload = $request->file('img_upload');
         $ext = strtolower($imgUpload->getClientOriginalExtension());
 
         $check = in_array($ext, $allowedfileExtension);
-        if (!$check) return response()->json(['errors' => ['img_upload' => 'File Only PDF/JPEG/PNG Allowed']]);
+        if (!$check) return response()->json(['img_upload' => ['File Only JPEG/PNG Allowed']], 422);
 
         $input = [
             'filename' => $filename . '.' . $ext,
             'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-            'img_url' => url('api/img/' . $filename),
+            'img_url' => url('api/img/' . $filename . '.'. $ext),
             'file_type' => $ext,
         ];
         try {
@@ -253,8 +252,17 @@ class ProductController extends Controller
             DB::commit();
         } catch (\Exception $err) {
             DB::rollBack();
-            return response()->json(['message' => $err->getMessage()], 422);
+            return response()->json(['message' => $err->getMessage()], 400);
         }
         return response()->json(['message' => 'Update Success'], 200);
+    }
+
+    public function img($id)
+    {
+        $productImg = productImg::where('filename', $id)->first();
+        if (!$productImg) return response()->json(['message' => 'Data Not Found'], 404);
+        $img = Storage::get($productImg->path);
+        if (!$img) return response()->json(['message' => 'Data Not Found'], 404);
+        return response()->make($img, 200, ['content-type' => Storage::mimeType($productImg->path)]);
     }
 }

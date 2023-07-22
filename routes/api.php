@@ -89,10 +89,31 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/edit/{id}', [SubscriberController::class, 'update']);
         Route::delete('/delete/{id}', [SubscriberController::class, 'delete']);
         Route::put('/edit-status/{id}', [SubscriberController::class, 'editSubscriberStatus']);
+        Route::get('/download/csv', [SubscriberController::class, 'csv']);
+        Route::get('/download/pdf', [SubscriberController::class, 'pdf']);
     });
     Route::get('/log-blast-email', [LogBlastEmailController::class, 'getLogBlastEmail']);
     Route::get('/auditrails', [AuditrailController::class, 'getAuditrails']);
     Route::get('/auditrails/export', [AuditrailController::class, 'csv']);
     Route::get('/auditrails/pdf', [AuditrailController::class, 'pdf']);
 });
+
+Route::group(['prefix' => 'catalog'], function () {
+    Route::group(['prefix' => 'products'], function () {
+        Route::get('', [ProductController::class, 'getProducts']);
+        Route::get('/{id}', [ProductController::class, 'getProduct']);
+    });
+    Route::group(['prefix' => 'categories'], function () {
+        Route::get('', [CategoryController::class, 'getCategories']);
+        Route::get('/{id}', [CategoryController::class, 'getCategory']);
+    });
+    Route::group(['prefix' => 'group-categories'], function () {
+        Route::get('', [GroupCategoryController::class, 'getGroupCategories']);
+        Route::get('/{id}', [GroupCategoryController::class, 'getGroupCategory']);
+    });
+    Route::group(['prefix' => 'subscribers'], function () {
+        Route::post('/create', [SubscriberController::class, 'create']);
+    });
+});
+Route::get('/img/{id}', [ProductController::class, 'img']);
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('web');
