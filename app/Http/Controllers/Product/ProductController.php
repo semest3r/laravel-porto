@@ -25,7 +25,16 @@ class ProductController extends Controller
 
     public function getProducts(Request $request)
     {
-        $request->input('limit') ? $limit = $request->input('limit') : $limit = 8;
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 10;
+        $products = Product::query()->with(['category', 'productImg'])->when($request->input('search'), function ($query, $search) {
+            $query->where('name_product', 'LIKE', '%' . $search . '%');
+        })->paginate($limit);
+        return response()->json($products, 200);
+    }
+
+    public function getProductsPublic(Request $request)
+    {
+        $request->input('limit') ? $limit = $request->input('limit') : $limit = 4;
         $products = Product::query()->with(['category', 'productImg'])->when($request->input('search'), function ($query, $search) {
             $query->where('name_product', 'LIKE', '%' . $search . '%');
         })->simplePaginate($limit);
@@ -59,6 +68,7 @@ class ProductController extends Controller
                 'user_id' => $user->id,
                 'name_product' => $request->input('name_product'),
                 'code_product' => $request->input('code_product'),
+                'description' => $request->input('description'),
                 'created_by' => $user->id,
                 'category_id' => $request->input('category')['id']
             ];
@@ -76,7 +86,7 @@ class ProductController extends Controller
                         'product_id' => $createdProduct->id,
                         'filename' => $filename . '.' . $ext,
                         'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-                        'img_url' => url('api/img/' . $filename .'.'. $ext),
+                        'img_url' => url('api/img/' . $filename . '.' . $ext),
                         'file_type' => $ext,
                         'created_at' => now()->toDateTimeString(),
                         'updated_at' => now()->toDateTimeString()
@@ -118,6 +128,7 @@ class ProductController extends Controller
             'name_product' => $request->input('name_product'),
             'code_product' => $request->input('code_product'),
             'category_id' => $request->input('category')['id'],
+            'description' => $request->input('description'),
         ];
 
         $user = $request->user();
@@ -197,7 +208,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'filename' => $filename . '.' . $ext,
                 'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-                'img_url' => url('api/img/' . $filename .'.'. $ext),
+                'img_url' => url('api/img/' . $filename . '.' . $ext),
                 'file_type' => $ext,
             ];
             $create = ProductImg::create($input);
@@ -233,7 +244,7 @@ class ProductController extends Controller
         $input = [
             'filename' => $filename . '.' . $ext,
             'path' => 'public/' . $ext . '/' . $filename . '.' . $ext,
-            'img_url' => url('api/img/' . $filename . '.'. $ext),
+            'img_url' => url('api/img/' . $filename . '.' . $ext),
             'file_type' => $ext,
         ];
         try {

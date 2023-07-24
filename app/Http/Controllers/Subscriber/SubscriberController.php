@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Subscriber;
 
 use App\Exports\SubscribersExport;
 use App\Http\Controllers\Controller;
+use App\Mail\BlastEmail;
 use App\Models\Subscriber;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
@@ -79,7 +82,8 @@ class SubscriberController extends Controller
         return response()->json(['message' => 'Update Status Success'], 200);
     }
 
-    public function csv(){
+    public function csv()
+    {
         return Excel::download(new SubscribersExport, 'subscribers.xlsx', \Maatwebsite\Excel\Excel::XLSX);
     }
 
@@ -88,5 +92,15 @@ class SubscriberController extends Controller
         $data = Subscriber::all();
         $pdf = Pdf::loadView('subscribersPdf', ['subscribers' => $data]);
         return $pdf->download();
+    }
+
+    public function sendMail(Request $request)
+    {
+        $user = User::find($request->user()->id);
+        $recievers = User::limit(50)->get();
+        foreach($recievers as $reciever){
+            Mail::to($reciever->email)->send(new BlastEmail($reciever));
+        }
+        return response()->json(['Send Mail Success'], 200);
     }
 }

@@ -92,6 +92,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/download/csv', [SubscriberController::class, 'csv']);
         Route::get('/download/pdf', [SubscriberController::class, 'pdf']);
     });
+    Route::get('/blastemail', [SubscriberController::class, 'sendMail']);
     Route::get('/log-blast-email', [LogBlastEmailController::class, 'getLogBlastEmail']);
     Route::get('/auditrails', [AuditrailController::class, 'getAuditrails']);
     Route::get('/auditrails/export', [AuditrailController::class, 'csv']);
@@ -100,7 +101,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 Route::group(['prefix' => 'catalog'], function () {
     Route::group(['prefix' => 'products'], function () {
-        Route::get('', [ProductController::class, 'getProducts']);
+        Route::get('', [ProductController::class, 'getProductsPublic']);
         Route::get('/{id}', [ProductController::class, 'getProduct']);
     });
     Route::group(['prefix' => 'categories'], function () {
